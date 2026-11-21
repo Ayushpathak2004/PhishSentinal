@@ -1,0 +1,56 @@
+{
+  "model_type": "RandomForestClassifier",
+  "n_estimators": 100,
+  "features": [
+    "url_length",
+    "domain_length",
+    "num_dots",
+    "num_hyphens",
+    "has_ip",
+    "has_at_symbol",
+    "domain_entropy",
+    "is_shortener",
+    "has_sensitive_keyword",
+    "has_brand_mention",
+    "urgency_count",
+    "credential_harvest_count",
+    "sender_reply_mismatch",
+    "has_executable_attachment",
+    "dmarc_spf_failure"
+  ],
+  "metrics": {
+    "accuracy": 1.0,
+    "precision": 1.0,
+    "recall": 1.0,
+    "f1_score": 1.0,
+    "confusion_matrix": [
+      [
+        150,
+        0
+      ],
+      [
+        0,
+        150
+      ]
+    ]
+  },
+  "feature_importances": {
+    "domain_entropy": 0.2761,
+    "url_length": 0.1809,
+    "num_dots": 0.1437,
+    "credential_harvest_count": 0.1139,
+    "has_brand_mention": 0.0675,
+    "domain_length": 0.0625,
+    "urgency_count": 0.0545,
+    "dmarc_spf_failure": 0.033,
+    "num_hyphens": 0.0275,
+    "sender_reply_mismatch": 0.02,
+    "has_sensitive_keyword": 0.0077,
+    "has_executable_attachment": 0.0071,
+    "has_ip": 0.0045,
+    "is_shortener": 0.0008,
+    "has_at_symbol": 0.0004
+  },
+  "dataset_samples": 1500,
+  "test_split": 0.2
+}
