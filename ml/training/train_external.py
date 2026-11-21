@@ -7,6 +7,7 @@ the existing synthetic model, and writes the retrained model + metadata.
 
 import json
 import shutil
+from datetime import datetime
 from pathlib import Path
 
 import numpy as np
@@ -28,7 +29,11 @@ from backend.app.utils.typosquatting import HIGH_VALUE_BRANDS, KNOWN_SHORTENERS
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 REPO_ROOT = BASE_DIR.parent
-DATASET_PATH = REPO_ROOT / "url_features_extracted1.csv"
+_DATASET_CANDIDATES = (
+    BASE_DIR / "datasets" / "url_features_extracted1.csv",
+    REPO_ROOT / "url_features_extracted1.csv",
+)
+DATASET_PATH = next((p for p in _DATASET_CANDIDATES if p.exists()), _DATASET_CANDIDATES[0])
 MODEL_PATH = BASE_DIR / "models" / "fraud_detector.joblib"
 METRICS_PATH = BASE_DIR / "models" / "model_metadata.json"
 MAPPED_PATH = BASE_DIR / "datasets" / "external_mapped.csv"
@@ -127,9 +132,10 @@ def main():
 
     # Back up the existing synthetic model before overwriting it.
     BACKUP_DIR.mkdir(parents=True, exist_ok=True)
+    stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     for path in (MODEL_PATH, METRICS_PATH):
         if path.exists():
-            shutil.copy2(path, BACKUP_DIR / f"pre_external_{path.name}")
+            shutil.copy2(path, BACKUP_DIR / f"{stamp}_{path.name}")
 
     MODEL_PATH.parent.mkdir(parents=True, exist_ok=True)
     mapped = X.copy()

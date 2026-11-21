@@ -4,7 +4,7 @@ param(
   [switch]$IncludeUnitTests
 )
 
-# End-to-end smoke test for a running PhishSenital stack.
+# End-to-end smoke test for a running PhishSentinal stack.
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File scripts\smoke_test.ps1
 #   powershell -ExecutionPolicy Bypass -File scripts\smoke_test.ps1 -IncludeUnitTests
@@ -35,7 +35,7 @@ function Post-Json([string]$Path, $Body) {
   Invoke-RestMethod -Uri "$ApiBase$Path" -Method Post -ContentType 'application/json' -Body $json -TimeoutSec 60
 }
 
-Write-Host "PhishSenital smoke test -> $ApiBase"
+Write-Host "PhishSentinal smoke test -> $ApiBase"
 Write-Host ('-' * 70)
 
 Check 'Backend health' {

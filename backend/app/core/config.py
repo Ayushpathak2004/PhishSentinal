@@ -8,7 +8,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 load_dotenv(BASE_DIR / ".env")
 
 class Settings(BaseModel):
-    PROJECT_NAME: str = "PhishSenital"
+    PROJECT_NAME: str = "PhishSentinal"
     VERSION: str = "1.0.0"
     API_V1_STR: str = "/api"
     

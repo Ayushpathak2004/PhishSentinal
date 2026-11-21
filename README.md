@@ -1,4 +1,4 @@
-# PhishSenital — Multi-Agent Fraud Detection and Automated Cybersecurity Response System
+# PhishSentinal — Multi-Agent Fraud Detection and Automated Cybersecurity Response System
 
 An intelligent, production-minded cybersecurity SaaS platform engineered to detect, classify, investigate, and autonomously respond to digital fraud across three primary attack vectors:
 

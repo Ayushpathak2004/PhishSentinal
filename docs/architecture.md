@@ -1,6 +1,6 @@
-# PhishSenital Platform Architecture
+# PhishSentinal Platform Architecture
 
-**PhishSenital** is designed as a modular, distributed cybersecurity SaaS platform combining deterministic protocol analysis, machine learning inference, and large language model (LLM) contextual reasoning.
+**PhishSentinal** is designed as a modular, distributed cybersecurity SaaS platform combining deterministic protocol analysis, machine learning inference, and large language model (LLM) contextual reasoning.
 
 ```mermaid
 flowchart TD

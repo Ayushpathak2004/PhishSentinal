@@ -30,7 +30,7 @@ load_settings_from_db()
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="PhishSenital: Multi-Agent Fraud Detection and Automated Cybersecurity Response System",
+    description="PhishSentinal: Multi-Agent Fraud Detection and Automated Cybersecurity Response System",
     docs_url="/docs",
     redoc_url="/redoc"
 )

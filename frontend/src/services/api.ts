@@ -14,7 +14,7 @@ const api = axios.create({
 
 // Attach a bearer token when one has been stored by the login page.
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('phishsenital_token');
+  const token = localStorage.getItem('phishsentinal_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -27,11 +27,11 @@ export const authApi = {
       username,
       password
     });
-    localStorage.setItem('phishsenital_token', res.data.access_token);
+    localStorage.setItem('phishsentinal_token', res.data.access_token);
     return res.data;
   },
-  logout: () => localStorage.removeItem('phishsenital_token'),
-  isAuthenticated: () => Boolean(localStorage.getItem('phishsenital_token')),
+  logout: () => localStorage.removeItem('phishsentinal_token'),
+  isAuthenticated: () => Boolean(localStorage.getItem('phishsentinal_token')),
   me: async () => {
     const res = await api.get('/auth/me');
     return res.data;

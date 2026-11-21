@@ -12,7 +12,7 @@ Operating guide for AI coding agents working in this repository.
 
 ## 1. What this project is
 
-**PhishSenital** — a local, full-stack cybersecurity SaaS-style platform for detecting and responding to three attack vectors:
+**PhishSentinal** — a local, full-stack cybersecurity SaaS-style platform for detecting and responding to three attack vectors:
 
 1. **Email fraud / phishing** — MIME parsing, BEC spoofing, `From`/`Reply-To` mismatch, SPF/DMARC failures, urgency and credential-harvesting language, dangerous attachments.
 2. **Website fraud / malicious URLs** — SSRF protection, typosquatting and IDN/Punycode checks, high-risk TLDs, Shannon-entropy DGA detection, suspicious login paths, safe HTTP probe.
@@ -37,7 +37,7 @@ A sequential five-agent pipeline performs ingestion → risk scoring → policy 
 
 These checks were run after restoring the missing `ml/` package and frontend
 source, fixing all confirmed runtime bugs, completing the security hardening,
-renaming the product to PhishSenital, and retraining the ML model on the
+renaming the product to PhishSentinal, and retraining the ML model on the
 external URL dataset:
 
 | Check | Command | Result |
@@ -580,7 +580,7 @@ Shared components: `Navbar`, `Sidebar`, `RiskScoreGauge`,
 `ThreatIndicatorsList`, `AgentTimeline`.
 
 API client: `frontend/src/services/api.ts` (`baseURL: '/api'`). A request
-interceptor attaches `localStorage['phishsenital_token']` as a bearer token when
+interceptor attaches `localStorage['phishsentinal_token']` as a bearer token when
 present; `authApi` handles login/logout. Vite proxies `/api` to
 `http://localhost:8000` in development (`vite.config.ts`). A production `dist/`
 served without that proxy needs same-origin API routing or a reverse proxy.
@@ -661,7 +661,7 @@ component library. Charts use Recharts. Icons use `lucide-react`.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `PROJECT_NAME` | `PhishSenital` | API title |
+| `PROJECT_NAME` | `PhishSentinal` | API title |
 | `VERSION` | `1.0.0` | API version |
 | `ENVIRONMENT` | `development` | `production` requires an explicit `SECRET_KEY` |
 | `SECRET_KEY` | built-in dev fallback | **Change in any real deployment** |

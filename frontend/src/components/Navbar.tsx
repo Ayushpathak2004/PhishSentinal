@@ -25,7 +25,7 @@ export const Navbar: React.FC<NavbarProps> = ({ threatsCount = 0 }) => {
           <Shield className="w-5 h-5 text-white" />
         </div>
         <div>
-          <span className="font-bold text-slate-100 tracking-wide text-base">PHISHSENITAL</span>
+          <span className="font-bold text-slate-100 tracking-wide text-base">PHISHSENTINAL</span>
           <span className="ml-2 text-xs font-semibold px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">
             MULTI-AGENT AI v1.0
           </span>

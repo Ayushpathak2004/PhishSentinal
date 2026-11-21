@@ -55,7 +55,7 @@ class EnforcerAgent:
                         entry = BlocklistEntry(
                             entry_type="URL",
                             value=url,
-                            reason="Automated quarantine by PhishSenital",
+                            reason="Automated quarantine by PhishSentinal",
                             severity="CRITICAL",
                             added_by=cls.AGENT_NAME
                         )

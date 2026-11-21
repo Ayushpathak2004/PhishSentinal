@@ -13,7 +13,7 @@ local-demo mode (`REQUIRE_AUTH=false`), a missing token resolves to the seeded
 - `GET /api/auth/me` — current user.
 
 Send the token as `Authorization: Bearer <token>`. The frontend stores it in
-`localStorage['phishsenital_token']` and sends it automatically.
+`localStorage['phishsentinal_token']` and sends it automatically.
 
 ## Scanners
 
