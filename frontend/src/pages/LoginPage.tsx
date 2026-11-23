@@ -35,7 +35,7 @@ export const LoginPage: React.FC = () => {
             <Shield className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold text-slate-100">Sign in to PhishSentinal</h1>
+            <h1 className="text-xl font-bold text-slate-100">Sign in to PhishSentinel</h1>
             <p className="text-xs text-slate-400">Multi-agent fraud detection console</p>
           </div>
         </div>

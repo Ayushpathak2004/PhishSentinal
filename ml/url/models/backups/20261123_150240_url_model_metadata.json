@@ -1,0 +1,72 @@
+{
+  "model_type": "RandomForestClassifier",
+  "n_estimators": 100,
+  "features": [
+    "url_length",
+    "domain_length",
+    "num_dots",
+    "num_hyphens",
+    "has_ip",
+    "has_at_symbol",
+    "domain_entropy",
+    "is_shortener",
+    "has_sensitive_keyword",
+    "has_brand_mention",
+    "urgency_count",
+    "credential_harvest_count",
+    "sender_reply_mismatch",
+    "has_executable_attachment",
+    "dmarc_spf_failure"
+  ],
+  "metrics": {
+    "train": {
+      "accuracy": 0.9925,
+      "precision": 0.9879,
+      "recall": 0.992,
+      "f1_score": 0.9899
+    },
+    "test": {
+      "accuracy": 0.992,
+      "precision": 0.9869,
+      "recall": 0.9916,
+      "f1_score": 0.9892,
+      "confusion_matrix": [
+        [
+          12637,
+          99
+        ],
+        [
+          63,
+          7445
+        ]
+      ],
+      "roc_auc": 0.9991
+    }
+  },
+  "feature_importances": {
+    "url_length": 0.292,
+    "num_dots": 0.2233,
+    "has_ip": 0.1533,
+    "domain_entropy": 0.1296,
+    "domain_length": 0.1286,
+    "has_executable_attachment": 0.0622,
+    "has_sensitive_keyword": 0.0042,
+    "num_hyphens": 0.0028,
+    "credential_harvest_count": 0.0027,
+    "is_shortener": 0.0011,
+    "has_brand_mention": 0.0003,
+    "has_at_symbol": 0.0,
+    "urgency_count": 0.0,
+    "sender_reply_mismatch": 0.0,
+    "dmarc_spf_failure": 0.0
+  },
+  "dataset_samples": 101218,
+  "dataset_source": "url_features_extracted1.csv",
+  "class_distribution": {
+    "0": 63678,
+    "1": 37540
+  },
+  "test_split": 0.2,
+  "trained_at": "2026-11-23T14:57:57.152481+05:30",
+  "notes": "URL features are derived using the same normalization as inference. Email-only features are zero for this URL dataset; the executable-file feature uses the source dataset's suspicious_file_extension field."
+}

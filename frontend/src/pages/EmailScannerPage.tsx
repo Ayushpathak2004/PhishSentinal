@@ -90,9 +90,6 @@ export const EmailScannerPage: React.FC = () => {
             <Mail className="w-6 h-6 text-cyan-400" />
             <span>Email Fraud & Phishing Scanner</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            Detects BEC spoofing, domain mismatches, SPF/DKIM failures, phishing language, and malicious attachments.
-          </p>
         </div>
 
         {/* Sample Load Buttons */}
@@ -236,6 +233,7 @@ export const EmailScannerPage: React.FC = () => {
             level={result.risk_level}
             confidence={result.confidence}
             fraudProbability={result.fraud_probability}
+            isMlActive={Boolean(result.agent_outputs?.risk_score_agent?.data?.ml_analysis?.is_ml_active)}
           />
 
           {/* AI Threat Summary & Recommended Action */}

@@ -1,6 +1,6 @@
-# PhishSentinal Platform Architecture
+# PhishSentinel Platform Architecture
 
-**PhishSentinal** is designed as a modular, distributed cybersecurity SaaS platform combining deterministic protocol analysis, machine learning inference, and large language model (LLM) contextual reasoning.
+**PhishSentinel** is designed as a modular, distributed cybersecurity SaaS platform combining deterministic protocol analysis, machine learning inference, and large language model (LLM) contextual reasoning.
 
 ```mermaid
 flowchart TD
@@ -41,7 +41,7 @@ flowchart TD
 - **Responsibility**: Tri-layer threat assessment and calibrated fraud probability scoring.
 - **Detection Architecture**:
   1. **Deterministic Rule Engine**: Domain mismatch, typosquatting (Levenshtein distance & homoglyphs), high-risk TLDs, urgent social engineering, double extensions.
-  2. **Machine Learning Model**: 15-feature numeric extraction evaluated by a trained `RandomForestClassifier`.
+  2. **Task-Specific Machine Learning**: Website URLs use a 15-feature `RandomForestClassifier`; uploaded QR images use an `ExtraTreesClassifier`; email uses a TF-IDF + `MultinomialNB` classifier in addition to deterministic rules.
   3. **Groq Contextual Intelligence**: Structured JSON generation for SOC-level threat explanation and defensive actions.
 - **Output**: Calibrated risk score (0-100), risk level (SAFE, MODERATE, HIGH, CRITICAL), confidence, and explainable indicators.
 

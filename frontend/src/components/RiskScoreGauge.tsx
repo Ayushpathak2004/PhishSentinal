@@ -6,14 +6,16 @@ interface RiskScoreGaugeProps {
   score: number;
   level: RiskLevel;
   confidence: number;
-  fraudProbability: number;
+  fraudProbability: number | null;
+  isMlActive: boolean;
 }
 
 export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({
   score,
   level,
   confidence,
-  fraudProbability
+  fraudProbability,
+  isMlActive
 }) => {
   const getColor = () => {
     if (score >= 70) return {
@@ -108,15 +110,19 @@ export const RiskScoreGauge: React.FC<RiskScoreGaugeProps> = ({
           <div className="text-lg font-bold text-slate-100 mt-0.5">
             {Math.round(confidence * 100)}%
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">Tri-layer verified</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            {isMlActive ? 'Rules + ML calibrated' : 'Rules-only assessment'}
+          </div>
         </div>
 
         <div className="bg-slate-950/60 border border-slate-800 rounded-lg p-3 text-center min-w-[130px]">
           <div className="text-[11px] text-slate-400 uppercase font-medium">Fraud Prob.</div>
           <div className="text-lg font-bold text-slate-100 mt-0.5">
-            {(fraudProbability * 100).toFixed(1)}%
+            {fraudProbability === null ? 'N/A' : `${(fraudProbability * 100).toFixed(1)}%`}
           </div>
-          <div className="text-[10px] text-slate-400 mt-0.5">ML calibrated</div>
+          <div className="text-[10px] text-slate-400 mt-0.5">
+            {isMlActive ? 'ML calibrated' : 'No trained model'}
+          </div>
         </div>
       </div>
     </div>

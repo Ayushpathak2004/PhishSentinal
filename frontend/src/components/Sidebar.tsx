@@ -5,10 +5,7 @@ import {
   Mail, 
   Globe, 
   QrCode, 
-  Database, 
-  Bot, 
-  AlertTriangle, 
-  Archive, 
+  Archive,
   FileText, 
   Settings 
 } from 'lucide-react';
@@ -19,9 +16,6 @@ export const Sidebar: React.FC = () => {
     { label: 'Email Scanner', path: '/email', icon: Mail },
     { label: 'Website Scanner', path: '/website', icon: Globe },
     { label: 'QR Scanner', path: '/qr', icon: QrCode },
-    { label: 'Threat Intel', path: '/intel', icon: Database },
-    { label: 'Agent Activity', path: '/agents', icon: Bot },
-    { label: 'Incidents', path: '/incidents', icon: AlertTriangle },
     { label: 'Quarantine Vault', path: '/quarantine', icon: Archive },
     { label: 'Reports', path: '/reports', icon: FileText },
     { label: 'Settings', path: '/settings', icon: Settings },
@@ -55,6 +49,7 @@ export const Sidebar: React.FC = () => {
         })}
       </div>
 
+      {/*
       <div className="p-4 border-t border-slate-800/80 m-2 rounded-xl bg-slate-950/60 text-xs text-slate-400 space-y-1.5">
         <div className="flex items-center justify-between text-slate-300 font-medium">
           <span>Security Perimeter</span>
@@ -64,6 +59,7 @@ export const Sidebar: React.FC = () => {
           SOC Platform v1.0.0
         </div>
       </div>
+      */}
     </aside>
   );
 };

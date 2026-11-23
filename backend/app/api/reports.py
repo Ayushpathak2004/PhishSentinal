@@ -149,7 +149,7 @@ def generate_pdf_report(scan_id: str, db: Session = Depends(get_db)):
     summary_data = [
         [Paragraph("Target Reference:", bold_style), Paragraph(_pdf_text(str(scan.input_reference)[:50]), body_style), Paragraph("Scan Protocol:", bold_style), Paragraph(_pdf_text(scan.scan_type), body_style)],
         [Paragraph("Calculated Risk Score:", bold_style), Paragraph(f"<b>{scan.risk_score} / 100</b>", ParagraphStyle('Score', textColor=score_color, fontSize=11, fontName='Helvetica-Bold')), Paragraph("Threat Classification:", bold_style), Paragraph(_pdf_text(scan.risk_level), ParagraphStyle('Level', textColor=score_color, fontSize=10, fontName='Helvetica-Bold'))],
-        [Paragraph("Model Confidence:", bold_style), Paragraph(f"{scan.confidence * 100:.1f}%", body_style), Paragraph("Fraud Probability:", bold_style), Paragraph(f"{scan.fraud_probability * 100:.1f}%", body_style)]
+        [Paragraph("Model Confidence:", bold_style), Paragraph(f"{scan.confidence * 100:.1f}%", body_style), Paragraph("Fraud Probability:", bold_style), Paragraph(f"{scan.fraud_probability * 100:.1f}%" if scan.fraud_probability is not None else "N/A (rules only)", body_style)]
     ]
     summary_table = Table(summary_data, colWidths=[130, 140, 120, 140])
     summary_table.setStyle(TableStyle([

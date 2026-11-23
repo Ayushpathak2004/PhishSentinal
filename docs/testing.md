@@ -7,7 +7,7 @@ The platform includes automated unit tests covering all core detectors, security
 From the workspace root, run:
 
 ```powershell
-py -m unittest backend/tests/test_detection.py backend/tests/test_api_scans.py backend/tests/test_hardening.py
+py -m unittest backend/tests/test_ml_models.py backend/tests/test_detection.py backend/tests/test_api_scans.py backend/tests/test_hardening.py
 ```
 
 `test_api_scans.py` and `test_hardening.py` create temporary SQLite databases,
@@ -68,8 +68,8 @@ powershell -ExecutionPolicy Bypass -File scripts\smoke_test.ps1 -IncludeUnitTest
 
 The first command exercises 16 live API checks (health, dashboard, agents, all
 three scan modes including QR image upload, incidents, quarantine integrity,
-reports CSV/PDF, settings, threat intel, auth). The second adds the 27-test
-Python suite and restores the DB afterwards. A fully working system reports
+reports CSV/PDF, settings, threat intel, auth). The second adds the Python unit and regression suite and restores the DB
+afterwards. A fully working system reports
 `RESULT: passed=17 failed=0` (or `16/0` without `-IncludeUnitTests`).
 
 To point it at a different deployment:
@@ -102,8 +102,12 @@ powershell -ExecutionPolicy Bypass -File scripts\smoke_test.ps1 -ApiBase "http:/
 ## What else you can do with this project
 
 - Add detectors: new phishing lexicons, DGA/entropy tuning, more QR payment schemes.
-- Replace the synthetic ML dataset with real labelled samples and retrain
-  (`py -m ml.training.train`); update `model_metadata.json` if features change.
+- Retrain a task-specific classifier with `py -m ml.url.train`,
+  `py -m ml.qr.train`, or `py -m ml.email.train`; `py -m ml.training.train_models`
+  trains all three and prints the train/test metrics summary. Their code and
+  model artifacts are under matching task folders. Email training downloads
+  the pinned dataset into the local Hugging Face cache; its source licenses
+  should be reviewed before redistributing data or model artifacts.
 - Wire real threat-intel feeds into `GET /api/threat-intel` and the blocklist.
 - Enforce role-based access (admin / analyst / auditor) using the existing `role` column.
 - Introduce Alembic migrations instead of `create_all` for schema changes.

@@ -18,10 +18,12 @@
 - **Zero-Execution Safeguard**: Permanently blocks automated payment dispatch and destination loading.
 
 ## 4. Machine Learning Component
-- **Model**: `RandomForestClassifier` trained with 100 estimators and 15 explainable numeric features.
-- **Primary dataset**: `url_features_extracted1.csv` (101,218 labelled URLs; 63,678 benign / 37,540 malicious). Retrain with `py -m ml.training.train_external`. Current held-out metrics: accuracy 99.05%, precision 98.37%, recall 99.08%, F1 98.73%, ROC AUC 99.95%.
-- A synthetic 1,500-sample generator (`py -m ml.training.train`) remains available for demos; its 100% metrics are not real-world accuracy.
-- **Features Extracted**:
+- **Website / URL**: A `RandomForestClassifier` uses 15 lexical and structural features, trained from `ml/url/datasets/url_features_extracted1.csv` (101,218 labeled URLs; 63,678 malicious / 37,540 benign). The source dataset labels `0` as malicious and `1` as benign; training remaps these so model class `1` consistently means malicious. Training and inference share canonical feature extraction, treating an optional `www.` prefix and an empty root path as equivalent. The source is URL-only; email-specific fields are not evidence for email classification.
+- **QR / quishing**: An `ExtraTreesClassifier` uses flattened 69x69 binary QR images from `ml/qr/datasets/QuishingDataset.zip` (9,987 labeled images). The training metadata treats label `1` as quishing; verify that mapping against the dataset source before production use.
+- **Email**: A `TfidfVectorizer` + `MultinomialNB` classifier uses the subject and body from `puyang2025/seven-phishing-email-datasets` (162,413 train / 40,604 test). Train accuracy/precision are **96.28% / 98.47%**; test accuracy/precision are **96.03% / 98.50%**. Label `1` includes spam as well as phishing. The corpus has mixed source licenses and may contain PII; see `ml/email/datasets/README.md`.
+- Each task's training code and artifacts live in `ml/url/`, `ml/qr/`, or `ml/email/`; train an individual model with `py -m ml.url.train`, `py -m ml.qr.train`, or `py -m ml.email.train`. The combined command `py -m ml.training.train_models` prints a final summary table of training and held-out testing accuracy and precision for all three models. Metrics are also shown on the Overview page and at `/api/ml/metrics`.
+- Test-split results are dataset-specific and should not be treated as production performance without validation on independent, representative data. A synthetic demo trainer (`py -m ml.training.train`) remains separate from runtime inference.
+- **URL model features**:
   1. `url_length`
   2. `domain_length`
   3. `num_dots`
@@ -37,7 +39,7 @@
   13. `sender_reply_mismatch`
   14. `has_executable_attachment`
   15. `dmarc_spf_failure`
-- **Output**: Calibrated probability estimate with feature contribution explanations.
+- **Output**: Model-estimated probability for the malicious class, with feature contribution explanations.
 
 ## 5. Groq LLM Contextual Reasoning
 - Leverages structured JSON generation via Groq API models (`openai/gpt-oss-120b`).

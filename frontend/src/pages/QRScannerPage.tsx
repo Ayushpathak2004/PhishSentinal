@@ -212,6 +212,7 @@ export const QRScannerPage: React.FC = () => {
             level={result.risk_level}
             confidence={result.confidence}
             fraudProbability={result.fraud_probability}
+            isMlActive={Boolean(result.agent_outputs?.risk_score_agent?.data?.ml_analysis?.is_ml_active)}
           />
 
           {/* AI Threat Summary & Action */}

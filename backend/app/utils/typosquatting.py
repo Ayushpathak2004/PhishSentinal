@@ -202,3 +202,17 @@ def analyze_domain_typosquatting(hostname: str) -> List[Dict[str, str]]:
                 break
 
     return indicators
+
+
+def has_suspicious_brand_mention(hostname: str) -> bool:
+    """Return whether a hostname contains a brand-impersonation signal."""
+    brand_indicator_types = {
+        "HOMOGLYPH_BRAND_SPOOFING",
+        "BRAND_IMPERSONATION",
+        "TYPOSQUATTING",
+        "SUBDOMAIN_BRAND_SPOOFING",
+    }
+    return any(
+        indicator["type"] in brand_indicator_types
+        for indicator in analyze_domain_typosquatting(hostname)
+    )

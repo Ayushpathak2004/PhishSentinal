@@ -1,0 +1,72 @@
+{
+  "model_type": "RandomForestClassifier",
+  "n_estimators": 100,
+  "features": [
+    "url_length",
+    "domain_length",
+    "num_dots",
+    "num_hyphens",
+    "has_ip",
+    "has_at_symbol",
+    "domain_entropy",
+    "is_shortener",
+    "has_sensitive_keyword",
+    "has_brand_mention",
+    "urgency_count",
+    "credential_harvest_count",
+    "sender_reply_mismatch",
+    "has_executable_attachment",
+    "dmarc_spf_failure"
+  ],
+  "metrics": {
+    "train": {
+      "accuracy": 0.992,
+      "precision": 0.9853,
+      "recall": 0.9932,
+      "f1_score": 0.9893
+    },
+    "test": {
+      "accuracy": 0.9905,
+      "precision": 0.9837,
+      "recall": 0.9908,
+      "f1_score": 0.9873,
+      "confusion_matrix": [
+        [
+          12613,
+          123
+        ],
+        [
+          69,
+          7439
+        ]
+      ],
+      "roc_auc": 0.9995
+    }
+  },
+  "feature_importances": {
+    "has_ip": 0.282,
+    "num_dots": 0.2587,
+    "domain_length": 0.1874,
+    "url_length": 0.1521,
+    "domain_entropy": 0.0593,
+    "has_executable_attachment": 0.0488,
+    "num_hyphens": 0.0041,
+    "has_sensitive_keyword": 0.0028,
+    "is_shortener": 0.0021,
+    "has_brand_mention": 0.0014,
+    "credential_harvest_count": 0.0012,
+    "has_at_symbol": 0.0,
+    "urgency_count": 0.0,
+    "sender_reply_mismatch": 0.0,
+    "dmarc_spf_failure": 0.0
+  },
+  "dataset_samples": 101218,
+  "dataset_source": "url_features_extracted1.csv",
+  "class_distribution": {
+    "0": 63678,
+    "1": 37540
+  },
+  "test_split": 0.2,
+  "trained_at": "2026-11-23T12:12:41+05:30",
+  "notes": "Trained on an external URL dataset. Some of the 15 model features are not present in the source data and were derived from the URL or set to 0 (sender_reply_mismatch, dmarc_spf_failure); domain_entropy is approximated by url_entropy."
+}

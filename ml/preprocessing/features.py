@@ -1,7 +1,46 @@
 import math
 import re
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 from typing import Dict, Any, List
+
+from backend.app.utils.typosquatting import split_domain
+
+
+def normalize_url_for_model(url: str) -> str:
+    """Canonicalize www and root-path variants before deriving URL features."""
+    target_url = (url or "").strip()
+    if not target_url:
+        return ""
+    if not target_url.lower().startswith(("http://", "https://")):
+        target_url = f"https://{target_url}"
+
+    parsed = urlparse(target_url)
+    hostname = parsed.hostname
+    if not hostname:
+        return target_url
+
+    normalized_host = hostname.lower()
+    if normalized_host.startswith("www."):
+        normalized_host = normalized_host[4:]
+
+    try:
+        port = parsed.port
+    except ValueError:
+        return target_url
+
+    authority = f"[{normalized_host}]" if ":" in normalized_host else normalized_host
+    if port is not None:
+        authority = f"{authority}:{port}"
+    if "@" in parsed.netloc:
+        authority = f"{parsed.netloc.rsplit('@', 1)[0]}@{authority}"
+
+    path = "" if parsed.path == "/" else parsed.path
+    return urlunparse(parsed._replace(
+        scheme=parsed.scheme.lower(),
+        netloc=authority,
+        path=path,
+    ))
+
 
 def calculate_entropy(text: str) -> float:
     if not text:
@@ -56,24 +95,35 @@ def extract_features_from_scan(scan_type: str, raw_data: Dict[str, Any]) -> List
 
     if scan_type in ("WEBSITE", "QR"):
         target_url = raw_data.get("url", "") or raw_data.get("decoded_content", "")
-        url_length = len(target_url)
         try:
-            parsed = urlparse(target_url if target_url.startswith("http") else "http://" + target_url)
+            normalized_url = normalize_url_for_model(target_url)
+            url_length = len(normalized_url)
+            parsed = urlparse(normalized_url)
             host = (parsed.hostname or "").lower()
             path = (parsed.path or "").lower()
-            domain_length = len(host)
+            main_domain, _, _ = split_domain(host)
+            domain_length = len(main_domain)
             num_dots = host.count(".")
-            num_hyphens = host.count("-")
+            num_hyphens = int("-" in host)
             has_ip = 1 if re.match(r'^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$', host) else 0
-            has_at_symbol = 1 if "@" in target_url else 0
-            domain_entropy = calculate_entropy(host)
+            has_at_symbol = 1 if "@" in normalized_url else 0
+            domain_entropy = calculate_entropy(main_domain)
             
-            from backend.app.utils.typosquatting import KNOWN_SHORTENERS, HIGH_VALUE_BRANDS
+            from backend.app.utils.typosquatting import (
+                KNOWN_SHORTENERS,
+                has_suspicious_brand_mention,
+            )
             is_shortener = 1 if any(s in host for s in KNOWN_SHORTENERS) else 0
-            has_brand_mention = 1 if any(b in host and host != b for b in HIGH_VALUE_BRANDS) else 0
+            has_brand_mention = int(has_suspicious_brand_mention(host))
             
             sensitive_keywords = ["login", "signin", "verify", "secure", "wallet", "banking", "account", "update"]
             has_sensitive_keyword = 1 if any(k in path or k in host for k in sensitive_keywords) else 0
+            urgency_terms = ["urgent", "immediate", "suspended", "terminate", "action", "verify", "expire"]
+            urgency_count = sum(1 for term in urgency_terms if term in normalized_url.lower())
+            harvest_terms = ["password", "login", "verify", "credential", "account", "banking"]
+            credential_harvest_count = sum(
+                1 for term in harvest_terms if term in normalized_url.lower()
+            )
         except Exception:
             pass
 

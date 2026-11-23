@@ -4,7 +4,7 @@ param(
   [switch]$IncludeUnitTests
 )
 
-# End-to-end smoke test for a running PhishSentinal stack.
+# End-to-end smoke test for a running PhishSentinel stack.
 # Usage:
 #   powershell -ExecutionPolicy Bypass -File scripts\smoke_test.ps1
 #   powershell -ExecutionPolicy Bypass -File scripts\smoke_test.ps1 -IncludeUnitTests
@@ -35,7 +35,7 @@ function Post-Json([string]$Path, $Body) {
   Invoke-RestMethod -Uri "$ApiBase$Path" -Method Post -ContentType 'application/json' -Body $json -TimeoutSec 60
 }
 
-Write-Host "PhishSentinal smoke test -> $ApiBase"
+Write-Host "PhishSentinel smoke test -> $ApiBase"
 Write-Host ('-' * 70)
 
 Check 'Backend health' {
@@ -169,7 +169,7 @@ if ($IncludeUnitTests) {
     try {
       $ErrorActionPreference = 'Continue'  # Python deprecation warnings go to stderr
       Copy-Item 'backend\cybersecurity_platform.db' $backup -Force
-      $output = & py -m unittest backend/tests/test_detection.py backend/tests/test_api_scans.py backend/tests/test_hardening.py 2>&1
+      $output = & py -m unittest backend/tests/test_ml_models.py backend/tests/test_detection.py backend/tests/test_api_scans.py backend/tests/test_hardening.py 2>&1
       $code = $LASTEXITCODE
       Copy-Item $backup 'backend\cybersecurity_platform.db' -Force
     } finally {

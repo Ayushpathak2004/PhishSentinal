@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Globe, Play, AlertCircle, CheckCircle2, RefreshCw, ShieldCheck, ExternalLink, Lock } from 'lucide-react';
+﻿import React, { useState } from 'react';
+import { Globe, Play, AlertCircle, CheckCircle2, RefreshCw } from 'lucide-react';
 import { scanApi } from '../services/api';
 import { ScanResult } from '../types';
 import { RiskScoreGauge } from '../components/RiskScoreGauge';
@@ -11,10 +11,6 @@ export const WebsiteScannerPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<ScanResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-
-  const handleQuickLoad = (testUrl: string) => {
-    setUrl(testUrl);
-  };
 
   const handleScan = async () => {
     if (!url.trim()) {
@@ -37,43 +33,13 @@ export const WebsiteScannerPage: React.FC = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <div>
         <div>
           <h1 className="text-2xl font-bold text-slate-100 tracking-tight flex items-center space-x-2.5">
             <Globe className="w-6 h-6 text-cyan-400" />
             <span>Website & Malicious URL Scanner</span>
           </h1>
-          <p className="text-xs text-slate-400 mt-1">
-            SSRF guard, typosquatting & IDN homoglyph detection, Shannon domain entropy, and safe redirection analysis.
-          </p>
-        </div>
 
-        {/* Quick Sample Presets */}
-        <div className="flex flex-wrap items-center gap-1.5 shrink-0">
-          <button
-            onClick={() => handleQuickLoad('https://paypa1-security-verification.xyz/login')}
-            className="text-[11px] px-2.5 py-1.5 rounded bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 border border-rose-500/30 font-medium"
-          >
-            Typosquatting
-          </button>
-          <button
-            onClick={() => handleQuickLoad('http://45.33.32.156/banking/auth/verify')}
-            className="text-[11px] px-2.5 py-1.5 rounded bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 font-medium"
-          >
-            Raw IP Host
-          </button>
-          <button
-            onClick={() => handleQuickLoad('http://169.254.169.254/latest/meta-data')}
-            className="text-[11px] px-2.5 py-1.5 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/30 font-medium"
-          >
-            SSRF Probe
-          </button>
-          <button
-            onClick={() => handleQuickLoad('https://www.wikipedia.org')}
-            className="text-[11px] px-2.5 py-1.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 font-medium"
-          >
-            Clean Site
-          </button>
         </div>
       </div>
 
@@ -121,13 +87,6 @@ export const WebsiteScannerPage: React.FC = () => {
           </button>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between text-[11px] text-slate-400 pt-1">
-          <div className="flex items-center space-x-2">
-            <Lock className="w-3.5 h-3.5 text-cyan-400" />
-            <span>Safe Probe: Remote scripts and malicious binaries are never executed.</span>
-          </div>
-          <span>Internal subnets and cloud metadata endpoints are strictly protected.</span>
-        </div>
       </div>
 
       {/* Results View */}
@@ -139,6 +98,7 @@ export const WebsiteScannerPage: React.FC = () => {
             level={result.risk_level}
             confidence={result.confidence}
             fraudProbability={result.fraud_probability}
+            isMlActive={Boolean(result.agent_outputs?.risk_score_agent?.data?.ml_analysis?.is_ml_active)}
           />
 
           {/* AI Threat Summary & Action */}

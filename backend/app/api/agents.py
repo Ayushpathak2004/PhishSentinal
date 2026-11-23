@@ -16,7 +16,7 @@ AGENTS_METADATA = [
     {
         "name": "Risk Score Agent",
         "role": "Threat Assessment & Fraud Probability Estimation",
-        "description": "Combines deterministic rule heuristics, scikit-learn Random Forest inference, and Groq LLM contextual reasoning."
+        "description": "Combines detector rules, a URL Random Forest or QR Extra Trees classifier when trained data applies, and Groq contextual reasoning."
     },
     {
         "name": "Policy Agent",

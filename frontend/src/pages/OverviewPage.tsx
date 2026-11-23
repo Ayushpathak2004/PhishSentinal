@@ -4,7 +4,6 @@ import {
   Mail, 
   Globe, 
   QrCode, 
-  Archive, 
   CheckCircle, 
   TrendingUp, 
   AlertTriangle,
@@ -21,12 +20,13 @@ import {
   YAxis, 
   Tooltip 
 } from 'recharts';
-import { dashboardApi, agentsApi } from '../services/api';
-import { DashboardStats, AgentStatus } from '../types';
+import { dashboardApi, agentsApi, mlApi } from '../services/api';
+import { DashboardStats, AgentStatus, MlModelMetrics } from '../types';
 
 export const OverviewPage: React.FC = () => {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [agents, setAgents] = useState<AgentStatus[]>([]);
+  const [mlModels, setMlModels] = useState<MlModelMetrics[] | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -38,6 +38,12 @@ export const OverviewPage: React.FC = () => {
         ]);
         setStats(statsData);
         setAgents(agentsData);
+        try {
+          const mlData = await mlApi.getMetrics();
+          setMlModels(mlData.models);
+        } catch (err) {
+          console.error('Failed to load ML model metrics', err);
+        }
       } catch (err) {
         console.error('Failed to load overview data', err);
       } finally {
@@ -58,8 +64,7 @@ export const OverviewPage: React.FC = () => {
     { name: 'Emails', count: stats.emails_analyzed },
     { name: 'Websites', count: stats.websites_analyzed },
     { name: 'QR Codes', count: stats.qr_analyzed },
-    { name: 'Threats', count: stats.threats_detected },
-    { name: 'Quarantined', count: stats.files_quarantined }
+    { name: 'Threats', count: stats.threats_detected }
   ] : [];
 
   return (
@@ -72,14 +77,10 @@ export const OverviewPage: React.FC = () => {
             Real-time multi-agent telemetry and automated threat containment statistics.
           </p>
         </div>
-        <div className="flex items-center space-x-2 text-xs text-slate-400 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg shrink-0">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
-          <span>Orchestrator Operational</span>
-        </div>
       </div>
 
       {/* Top Metric Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-semibold uppercase">Total Scans</span>
@@ -106,17 +107,6 @@ export const OverviewPage: React.FC = () => {
 
         <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm">
           <div className="flex items-center justify-between text-slate-400">
-            <span className="text-xs font-semibold uppercase">Files Quarantined</span>
-            <Archive className="w-4 h-4 text-rose-400" />
-          </div>
-          <div className="text-2xl font-bold text-rose-400 mt-2">
-            {stats ? stats.files_quarantined : '...'}
-          </div>
-          <div className="text-[11px] text-slate-400 mt-1">App-managed isolation</div>
-        </div>
-
-        <div className="bg-slate-900 border border-slate-800 rounded-xl p-4 shadow-sm">
-          <div className="flex items-center justify-between text-slate-400">
             <span className="text-xs font-semibold uppercase">Incidents Resolved</span>
             <CheckCircle className="w-4 h-4 text-emerald-400" />
           </div>
@@ -125,6 +115,62 @@ export const OverviewPage: React.FC = () => {
           </div>
           <div className="text-[11px] text-slate-400 mt-1">Remediated & verified</div>
         </div>
+      </div>
+
+      {/* Per-task ML training and test metrics */}
+      <div className="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-lg">
+        <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider mb-4">
+          ML Model Training & Test Performance
+        </h3>
+        {mlModels ? (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {mlModels.map((model) => (
+              <div key={model.task} className="bg-slate-950/60 border border-slate-800 rounded-lg p-4 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs font-bold text-slate-100">{model.display_name}</span>
+                  <span className={`text-[10px] uppercase font-semibold ${
+                    model.status === 'trained' ? 'text-emerald-400' : 'text-amber-400'
+                  }`}>
+                    {model.status.replace('_', ' ')}
+                  </span>
+                </div>
+                {model.metrics ? (
+                  <>
+                    <div className="text-[10px] text-slate-400">
+                      {model.model_type} · {model.dataset_source} · {model.dataset_samples?.toLocaleString()} samples
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <div className="text-[10px] uppercase text-slate-500 mb-1">Training</div>
+                        <div className="text-xs text-slate-300">
+                          Accuracy: {(model.metrics.train.accuracy * 100).toFixed(2)}%
+                        </div>
+                        <div className="text-xs text-slate-300">
+                          Precision: {(model.metrics.train.precision * 100).toFixed(2)}%
+                        </div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] uppercase text-slate-500 mb-1">Testing</div>
+                        <div className="text-xs text-slate-300">
+                          Accuracy: {(model.metrics.test.accuracy * 100).toFixed(2)}%
+                        </div>
+                        <div className="text-xs text-slate-300">
+                          Precision: {(model.metrics.test.precision * 100).toFixed(2)}%
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <p className="text-xs text-slate-400">
+                    {model.reason || 'No training metrics available.'}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-xs text-slate-400">Model metrics are unavailable.</p>
+        )}
       </div>
 
       {/* Visual Analytics Charts */}

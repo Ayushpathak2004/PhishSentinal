@@ -1,0 +1,42 @@
+{
+  "task": "Email phishing/spam classification",
+  "model_type": "TfidfVectorizer + MultinomialNB",
+  "features": [
+    "subject",
+    "text"
+  ],
+  "positive_class": 1,
+  "class_names": {
+    "0": "benign/ham",
+    "1": "phishing/spam"
+  },
+  "dataset_source": "puyang2025/seven-phishing-email-datasets",
+  "dataset_revision": "b7f3f8d99ebd4fd0af0a5afe027420e53f08d1a4",
+  "dataset_samples": 203017,
+  "training_samples": 162413,
+  "test_samples": 40604,
+  "class_distribution": {
+    "0": 86951,
+    "1": 75462
+  },
+  "test_class_distribution": {
+    "0": 21738,
+    "1": 18866
+  },
+  "metrics": {
+    "train": {
+      "accuracy": 0.9628,
+      "precision": 0.9847,
+      "recall": 0.9346,
+      "f1_score": 0.959
+    },
+    "test": {
+      "accuracy": 0.9603,
+      "precision": 0.985,
+      "recall": 0.9287,
+      "f1_score": 0.956
+    }
+  },
+  "trained_at": "2026-11-23T12:55:40.402188+05:30",
+  "notes": "Label 1 includes phishing and other spam/unwanted messages. The corpus combines historical datasets; it may contain PII and has mixed source licenses. URLs, email addresses, and long numbers are replaced with tokens before training. The supplied test split may still contain near-duplicates or related email threads."
+}

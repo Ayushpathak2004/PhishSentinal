@@ -1,8 +1,7 @@
 import time
-from typing import Dict, Any, List
+from typing import Dict, Any, Optional
 
-from ml.preprocessing.features import extract_features_from_scan
-from ml.evaluation.predict import predict_fraud_score
+from ml.evaluation.predict import predict_scan
 from backend.app.services.groq_service import analyze_with_groq
 from backend.app.core.config import settings
 
@@ -10,7 +9,7 @@ class RiskScoreAgent:
     """
     Agent 2: Risk Score Agent
     Purpose: Threat assessment and fraud probability estimation using a hybrid
-             tri-layer detection engine (Rules + ML Inference + Groq Reasoning).
+             task-specific detection engine (Rules + ML Inference + Groq Reasoning).
     """
     AGENT_NAME = "Risk Score Agent"
     ROLE = "Threat Assessment & Fraud Probability Estimation"
@@ -19,7 +18,8 @@ class RiskScoreAgent:
     async def process(
         cls,
         task_id: str,
-        file_agent_output: Dict[str, Any]
+        file_agent_output: Dict[str, Any],
+        raw_input: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         start_time = time.time()
         file_data = file_agent_output.get("data", {})
@@ -31,14 +31,18 @@ class RiskScoreAgent:
         indicators = raw_analysis.get("indicators", [])
 
         # 2. Machine Learning Inference
-        ml_features = extract_features_from_scan(scan_type, raw_analysis)
-        ml_result = predict_fraud_score(ml_features)
-        ml_prob = float(ml_result.get("fraud_probability", 0.0))
+        ml_result = predict_scan(scan_type, raw_analysis, raw_input)
+        ml_active = bool(ml_result.get("is_ml_active"))
+        raw_ml_prob = ml_result.get("fraud_probability")
+        ml_prob = float(raw_ml_prob) if raw_ml_prob is not None else None
         ml_confidence = float(ml_result.get("confidence", 0.85))
 
         # 3. Hybrid Calibrated Score Synthesis
-        # Weighting: 55% deterministic rule score, 45% ML probability scaled to 100
-        combined_score = (rule_score * 0.55) + ((ml_prob * 100.0) * 0.45)
+        if ml_active and ml_prob is not None:
+            # Weighting: 55% deterministic rule score, 45% task-specific ML probability.
+            combined_score = (rule_score * 0.55) + ((ml_prob * 100.0) * 0.45)
+        else:
+            combined_score = rule_score
         # Cap score between 0 and 100
         combined_score = round(min(max(combined_score, 0.0), 100.0), 1)
 
@@ -55,7 +59,10 @@ class RiskScoreAgent:
 
         # Explicit Uncertainty Handling
         # If no indicators triggered but domain is brand new or input is unverified, cap confidence
-        if len(indicators) == 0:
+        if not ml_active:
+            confidence = 0.75 if indicators else 0.55
+            confidence_note = "No trained model applies to this input; assessment is based on detector rules."
+        elif len(indicators) == 0:
             confidence = min(ml_confidence, 0.78)
             confidence_note = "No overt signatures observed. Baseline risk assigned with conservative confidence."
         else:
@@ -72,10 +79,15 @@ class RiskScoreAgent:
         )
 
         execution_time = time.time() - start_time
+        ml_summary = (
+            f"ML probability: {ml_prob:.2f}"
+            if ml_prob is not None
+            else "ML unavailable; rules-only risk score"
+        )
         summary = (
             f"Assessed {risk_level} threat level (Score: {combined_score}/100, "
-            f"Fraud Prob: {ml_prob:.2f}, Confidence: {confidence:.2f}). "
-            f"Identified {len(indicators)} security indicators via Hybrid Rules+ML+LLM."
+            f"{ml_summary}, Confidence: {confidence:.2f}). "
+            f"Identified {len(indicators)} security indicators."
         )
 
         return {
@@ -88,7 +100,7 @@ class RiskScoreAgent:
             "data": {
                 "risk_score": combined_score,
                 "risk_level": risk_level,
-                "fraud_probability": round(ml_prob, 3),
+                "fraud_probability": round(ml_prob, 3) if ml_prob is not None else None,
                 "confidence": round(confidence, 2),
                 "confidence_note": confidence_note,
                 "indicators": indicators,

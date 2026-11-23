@@ -5,12 +5,14 @@ import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
+import pandas as pd
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from ml.preprocessing.features import FEATURE_NAMES, extract_features_from_scan
+from ml.url.train import map_source_labels, map_to_features
 from backend.app.agents.enforcer_agent import EnforcerAgent
 from backend.app.agents.orchestrator import AgentOrchestrator
 from backend.app.agents.vault_keeper import VaultKeeper
@@ -97,6 +99,60 @@ class HardeningTests(unittest.TestCase):
             {"BRAND_IMPERSONATION", "TYPOSQUATTING", "HOMOGLYPH_BRAND_SPOOFING"} & set(benign_types)
         )
 
+    def test_exact_brand_domain_is_not_a_suspicious_ml_feature(self):
+        brand_index = FEATURE_NAMES.index("has_brand_mention")
+        for hostname in ("google.com", "www.google.com"):
+            features = extract_features_from_scan(
+                "WEBSITE",
+                {"url": f"https://{hostname}"},
+            )
+            self.assertEqual(features[brand_index], 0.0, hostname)
+
+        spoofed_features = extract_features_from_scan(
+            "WEBSITE",
+            {"url": "https://google-login.com"},
+        )
+        self.assertEqual(spoofed_features[brand_index], 1.0)
+
+    def test_www_and_root_slash_do_not_change_url_ml_features(self):
+        for domain in ("amazon.in", "google.com"):
+            plain = extract_features_from_scan(
+                "WEBSITE",
+                {"url": f"https://{domain}"},
+            )
+            www_root_slash = extract_features_from_scan(
+                "WEBSITE",
+                {"url": f"https://www.{domain}/"},
+            )
+            self.assertEqual(plain, www_root_slash, domain)
+
+    def test_url_training_and_inference_brand_features_match(self):
+        rows = pd.DataFrame({
+            "URL": [
+                "https://amazon.in",
+                "https://www.amazon.in/",
+                "https://google.com",
+                "https://www.google.com/",
+                "https://google-login.com",
+            ],
+            "suspicious_file_extension": [0, 0],
+        })
+
+        training_features = map_to_features(rows)
+        self.assertEqual(
+            training_features.iloc[0].tolist(),
+            training_features.iloc[1].tolist(),
+        )
+        self.assertEqual(
+            training_features.iloc[2].tolist(),
+            training_features.iloc[3].tolist(),
+        )
+        self.assertEqual(training_features["has_brand_mention"].tolist(), [0, 0, 0, 0, 1])
+
+    def test_url_dataset_labels_map_malicious_to_positive_class(self):
+        labels = pd.Series([0, 0, 1, 1])
+        self.assertEqual(map_source_labels(labels).tolist(), [1, 1, 0, 0])
+
     def test_restore_moves_file_and_sets_timestamp(self):
         payload = b"ORIGINAL-PAYLOAD"
         source = self.quarantine_dir / "restore_test.bin"
@@ -157,6 +213,7 @@ class HardeningTests(unittest.TestCase):
             input_reference="evil.com/?a=1&b=<script>alert(1)</script>",
             risk_score=95.0,
             risk_level="CRITICAL",
+            fraud_probability=None,
             summary="Payload <b>bold</b> & raw & markup",
             full_result={},
         )

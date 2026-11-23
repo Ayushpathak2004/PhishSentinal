@@ -4,7 +4,8 @@ import {
   DashboardStats, 
   AgentStatus, 
   IncidentItem, 
-  QuarantinedItem 
+  QuarantinedItem,
+  MlModelMetrics,
 } from '../types';
 
 const api = axios.create({
@@ -14,7 +15,7 @@ const api = axios.create({
 
 // Attach a bearer token when one has been stored by the login page.
 api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('phishsentinal_token');
+  const token = localStorage.getItem('phishsentinel_token');
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
@@ -27,11 +28,11 @@ export const authApi = {
       username,
       password
     });
-    localStorage.setItem('phishsentinal_token', res.data.access_token);
+    localStorage.setItem('phishsentinel_token', res.data.access_token);
     return res.data;
   },
-  logout: () => localStorage.removeItem('phishsentinal_token'),
-  isAuthenticated: () => Boolean(localStorage.getItem('phishsentinal_token')),
+  logout: () => localStorage.removeItem('phishsentinel_token'),
+  isAuthenticated: () => Boolean(localStorage.getItem('phishsentinel_token')),
   me: async () => {
     const res = await api.get('/auth/me');
     return res.data;
@@ -95,6 +96,13 @@ export const agentsApi = {
   },
   getActivity: async () => {
     const res = await api.get<any[]>('/agents/activity');
+    return res.data;
+  },
+};
+
+export const mlApi = {
+  getMetrics: async () => {
+    const res = await api.get<{ models: MlModelMetrics[] }>('/ml/metrics');
     return res.data;
   },
 };

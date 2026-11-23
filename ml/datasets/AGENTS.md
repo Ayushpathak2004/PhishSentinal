@@ -12,7 +12,7 @@ Operating guide for AI coding agents working in this repository.
 
 ## 1. What this project is
 
-**PhishSentinal** — a local, full-stack cybersecurity SaaS-style platform for detecting and responding to three attack vectors:
+**PhishSentinel** — a local, full-stack cybersecurity SaaS-style platform for detecting and responding to three attack vectors:
 
 1. **Email fraud / phishing** — MIME parsing, BEC spoofing, `From`/`Reply-To` mismatch, SPF/DMARC failures, urgency and credential-harvesting language, dangerous attachments.
 2. **Website fraud / malicious URLs** — SSRF protection, typosquatting and IDN/Punycode checks, high-risk TLDs, Shannon-entropy DGA detection, suspicious login paths, safe HTTP probe.
@@ -26,7 +26,7 @@ A sequential five-agent pipeline performs ingestion → risk scoring → policy 
 |---|---|
 | Backend | Python 3.11+ (verified 3.14), FastAPI, Pydantic v2, SQLAlchemy 2.0, Uvicorn |
 | Database | SQLite by default (`backend/cybersecurity_platform.db`); PostgreSQL-ready schema |
-| ML | scikit-learn `RandomForestClassifier`, 15 numeric features, joblib model |
+| ML | Task-specific URL `RandomForestClassifier`, QR `ExtraTreesClassifier`, and email TF-IDF + `MultinomialNB` classifiers |
 | LLM | Groq API (`openai/gpt-oss-120b`) with deterministic local fallback |
 | Frontend | React 19, TypeScript, Vite 8, Tailwind CSS 4, React Router 7, Axios, Recharts, Lucide |
 | Security tooling | OpenCV, Pillow, dnspython, httpx, ReportLab, hashlib/hmac |
@@ -35,21 +35,19 @@ A sequential five-agent pipeline performs ingestion → risk scoring → policy 
 
 ## 2. Current verified state
 
-These checks were run after restoring the missing `ml/` package and frontend
-source, fixing all confirmed runtime bugs, completing the security hardening,
-renaming the product to PhishSentinal, and retraining the ML model on the
-external URL dataset:
+Latest task-specific ML validation and backend regression results:
 
 | Check | Command | Result |
 |---|---|---|
 | Backend imports | `py -c "import backend.app.main"` | **OK** |
-| Full test suite | `py -m unittest backend/tests/test_detection.py backend/tests/test_api_scans.py backend/tests/test_hardening.py -v` | **27/27 pass** |
-| ML model | `py -m ml.training.train_external` | **Retrained on 101,218 external rows**; accuracy 99.05%, precision 98.37%, recall 99.08%, F1 98.73% |
-| ML prediction | sample `predict_fraud_score(...)` | **OK**, `is_ml_active: true` |
+| Backend regression tests | `py -m unittest backend.tests.test_ml_models backend.tests.test_hardening backend.tests.test_api_scans -v` | **24/24 pass**; `test_detection` not run because it writes to the real DB |
+| URL model | `py -m ml.training.train_models` | Train accuracy 99.20%, precision 98.53%; test accuracy 99.05%, precision 98.37% |
+| QR model | `py -m ml.training.train_models` | Train accuracy 100%, precision 100%; test accuracy 81.98%, precision 87.69% |
+| Email ML | `py -m ml.email.train` | Train accuracy 96.28%, precision 98.47%; test accuracy 96.03%, precision 98.50% |
+| ML inference | `predict_scan(...)` smoke checks | URL, QR, and email classifiers load independently; email rules remain enabled |
 | Groq live call | `analyze_with_groq(...)` with local `backend/.env` | **OK**, `is_groq_active: true` |
 | Frontend install | `npm install` in `frontend/` | **OK**, 0 vulnerabilities |
-| Frontend production build | `npm run build` | **OK** (~835 kB JS chunk warning) |
-| Frontend lint | `npm run lint` | **Warnings only**, no new warnings |
+| Frontend diagnostics | VS Code Problems check | **No errors** in changed frontend files |
 | API smoke tests | health/dashboard/agents/email-file | **OK** |
 
 **All previously confirmed runtime bugs are fixed and regression-tested.**
@@ -66,7 +64,6 @@ See §12 for the few documented design limitations that remain.
 Majorproject2/
 ├── AGENTS.md                       ← this file
 ├── README.md                       ← human-facing quick start
-├── url_features_extracted1.csv     ← user-supplied training dataset (101,218 URLs)
 ├── .gitignore
 ├── backend/
 │   ├── .env.example                ← copy to backend/.env
@@ -119,14 +116,25 @@ Majorproject2/
 │   ├── api_documentation.md
 │   └── testing.md
 ├── ml/
-│   ├── datasets/training_dataset.csv
-│   ├── datasets/external_mapped.csv     ← mapped external training rows
-│   ├── training/train_external.py      ← retrain on external dataset
-│   ├── evaluation/predict.py       ← model loading, prediction, fallback
-│   ├── models/fraud_detector.joblib
-│   ├── models/model_metadata.json
-│   ├── preprocessing/features.py   ← FEATURE_NAMES + extract_features_from_scan
-│   └── training/train.py           ← synthetic dataset generator + training
+│   ├── email/                    ← email text model, dataset source, and artifacts
+│   ├── url/
+│   │   ├── datasets/              ← URL source data + generated mapped rows
+│   │   ├── models/                ← URL model + training metrics
+│   │   ├── inference.py           ← URL inference inputs and artifact paths
+│   │   └── train.py               ← URL classifier training
+│   ├── qr/
+│   │   ├── datasets/              ← labeled QR image dataset
+│   │   ├── models/                ← QR model + training metrics
+│   │   ├── inference.py           ← QR inference inputs and artifact paths
+│   │   ├── preprocessing.py       ← QR image normalization
+│   │   └── train.py               ← QR image classifier training
+│   ├── email/inference.py         ← email inference input and artifact paths
+│   ├── training/train_models.py   ← train URL + QR + email models
+│   ├── evaluation/predict.py      ← task-specific model routing
+│   ├── preprocessing/features.py  ← shared URL feature contract
+│   ├── datasets/training_dataset.csv ← legacy synthetic demo only
+│   ├── models/                    ← legacy synthetic demo artifacts, not loaded at runtime
+│   └── training/train.py          ← legacy synthetic demo trainer
 └── frontend/
     ├── index.html
     ├── package.json / package-lock.json
@@ -170,8 +178,8 @@ py -m pip install -r backend/requirements.txt
 Copy-Item backend\.env.example backend\.env
 # Edit backend\.env if you have a Groq key; otherwise the app uses the local fallback.
 
-# Optional: retrain the ML model (model + dataset are committed)
-py -m ml.training.train
+# Train URL, QR, and email ML models and print train/test metrics
+py -m ml.training.train_models
 
 # Start API on http://localhost:8000
 py -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
@@ -315,13 +323,14 @@ so a failed agent records an `ERROR` output instead of aborting the pipeline.
 `RiskScoreAgent` combines three layers:
 
 1. **Deterministic rules** — `rule_score` 0–100 from the detector.
-2. **ML** — `RandomForestClassifier` probability 0–1 (`ml/evaluation/predict.py`); deterministic fallback if the model is missing.
+2. **Task-specific ML** — URL scans use the URL `RandomForestClassifier`; uploaded, decodable QR images use the QR `ExtraTreesClassifier`; email scans use the email TF-IDF + `MultinomialNB` classifier alongside rules. Manual non-URL QR payloads remain rules-only.
 3. **Groq** — explanation and mitigation; never overrides the numeric score.
 
 Formula:
 
 ```text
-combined = (rule_score * 0.55) + ((ml_probability * 100) * 0.45)
+combined = (rule_score * 0.55) + ((ml_probability * 100) * 0.45)  # when a model applies
+combined = rule_score                                               # rules-only inputs
 combined = round(clamp(combined, 0, 100), 1)
 ```
 
@@ -438,18 +447,34 @@ receives all lexical indicators; only the outbound probe is skipped.
   `has_at_symbol`, `domain_entropy`, `is_shortener`, `has_sensitive_keyword`,
   `has_brand_mention`, `urgency_count`, `credential_harvest_count`,
   `sender_reply_mismatch`, `has_executable_attachment`, `dmarc_spf_failure`.
-- `extract_features_from_scan(scan_type, raw_analysis)` builds the 15-vector.
-- `predict_fraud_score(features)` loads `ml/models/fraud_detector.joblib` once,
-  returns probability, confidence, model type, and top feature contributions.
-- If the model is missing or fails, it falls back to a deterministic
-  `positive_signals / 6` heuristic with `is_ml_active: false`.
+- Website URLs use `ml/url/models/url_fraud_detector.joblib`, trained on
+  `ml/url/datasets/url_features_extracted1.csv` (101,218 labeled URLs).
+- Uploaded QR images use `ml/qr/models/qr_quishing_detector.joblib`, trained on
+  `ml/qr/datasets/QuishingDataset.zip` (9,987 binary 69x69 images). Label `1` is
+  treated as quishing and must be checked against the dataset source before production use.
+- Email uses `ml/email/models/email_phishing_detector.joblib`, trained on the
+  pinned Hugging Face phishing/spam corpus. Existing email detector rules
+  continue to run alongside this model.
+- `predict_scan(scan_type, raw_analysis, raw_input)` selects the appropriate
+  task model; QR images are not classified if the QR detector cannot decode them.
+- `GET /api/ml/metrics` exposes training and test metrics, shown on Overview.
+- If an applicable model is missing or fails, it logs the error and falls back
+  to the detector's rule score without fabricating an ML probability.
 - `ml/training/train.py` still generates a **synthetic** 1,500-sample demo
-  dataset (100% metrics, not real-world accuracy).
-- `ml/training/train_external.py` retrains on `url_features_extracted1.csv`
-  (101,218 labelled URLs). It maps the CSV onto the 15-feature contract, backs
-  up the previous model into `ml/models/backups/`, and writes the new model +
-  metadata. Current external-model metrics: accuracy 99.05%, precision 98.37%,
-  recall 99.08%, F1 98.73%, ROC AUC 99.95%.
+  dataset and writes legacy demo artifacts; it is not used by runtime inference.
+- `ml/url/train.py` retrains on the URL dataset and writes the URL model +
+  metadata inside `ml/url/`.
+- `ml/qr/train.py` safely reads only the needed NumPy array types from the QR
+  dataset pickle, then writes the QR image model and metadata inside `ml/qr/`.
+- `ml/email/train.py` loads the pinned Hugging Face train/test splits and writes
+  the TF-IDF + MultinomialNB email model and metrics inside `ml/email/`.
+- `py -m ml.training.train_models` trains all three tasks and prints a
+  final summary table of train and held-out test accuracy and precision.
+  Current QR training accuracy is substantially higher than test accuracy;
+  validate on independent QR sources.
+- Individual training commands are `py -m ml.url.train`, `py -m ml.qr.train`,
+  and `py -m ml.email.train`. Review the mixed source licenses before
+  redistributing dataset or model artifacts.
   - Note: `sender_reply_mismatch` and `dmarc_spf_failure` are set to 0 for this
     URL-only dataset; `domain_entropy` is approximated by `url_entropy`.
 
@@ -580,7 +605,7 @@ Shared components: `Navbar`, `Sidebar`, `RiskScoreGauge`,
 `ThreatIndicatorsList`, `AgentTimeline`.
 
 API client: `frontend/src/services/api.ts` (`baseURL: '/api'`). A request
-interceptor attaches `localStorage['phishsentinal_token']` as a bearer token when
+interceptor attaches `localStorage['phishsentinel_token']` as a bearer token when
 present; `authApi` handles login/logout. Vite proxies `/api` to
 `http://localhost:8000` in development (`vite.config.ts`). A production `dist/`
 served without that proxy needs same-origin API routing or a reverse proxy.
@@ -633,12 +658,13 @@ component library. Charts use Recharts. Icons use `lucide-react`.
 
 ### ML
 
-- `FEATURE_NAMES` order is the model contract. Do not reorder or rename without
-  retraining and updating `model_metadata.json`.
+- `FEATURE_NAMES` order is the URL model contract. Do not reorder or rename
+  without retraining and updating `url_model_metadata.json`.
 - Keep `extract_features_from_scan` aligned with the keys each detector returns.
-- Retrain with `py -m ml.training.train`; this rewrites the dataset, joblib model,
-  and metadata.
-- The model is synthetic-data trained. Do not claim production accuracy.
+- Retrain a single task with `py -m ml.url.train`, `py -m ml.qr.train`, or
+  `py -m ml.email.train`; `py -m ml.training.train_models` trains all three.
+- The email corpus has mixed source licenses and may include PII; review its
+  source terms before redistributing data or model artifacts.
 
 ### Tests
 
@@ -661,7 +687,7 @@ component library. Charts use Recharts. Icons use `lucide-react`.
 
 | Variable | Default | Notes |
 |---|---|---|
-| `PROJECT_NAME` | `PhishSentinal` | API title |
+| `PROJECT_NAME` | `PhishSentinel` | API title |
 | `VERSION` | `1.0.0` | API version |
 | `ENVIRONMENT` | `development` | `production` requires an explicit `SECRET_KEY` |
 | `SECRET_KEY` | built-in dev fallback | **Change in any real deployment** |
@@ -798,9 +824,11 @@ Regression tests live in `backend/tests/test_api_scans.py` and
   Set it to `true` (and override `DEFAULT_ANALYST_PASSWORD`) for any real use.
   The inherited limitation is that this is still a local demo, not a hardened
   multi-tenant identity system.
-- **Synthetic ML dataset.** `ml/training/train.py` generates its own data and
-  reports 100% accuracy. The model was retrained on 2026-11-21, but it is a
-  demonstration, not a validated real-world fraud model.
+- **Dataset limitations.** URL and QR train/test scores are specific to their
+  supplied datasets. The QR model's 100% training vs 81.98% testing accuracy
+  signals likely overfitting; independent source-based validation is required.
+  The email corpus contains historical data, includes spam beyond phishing,
+  may contain PII, and aggregates sources with different licenses.
 - **Prompt-injection defense is regex-based.** `sanitize_untrusted_input` caps
   length and redacts a few markers; it is not a complete defense against a
   determined attacker.
@@ -845,7 +873,7 @@ service are exercised indirectly but still lack dedicated unit tests.
    missing `ml/` and frontend files.
 8. **When changing an API response**, update `frontend/src/types/index.ts`,
    `frontend/src/services/api.ts`, and `docs/api_documentation.md`.
-9. **When changing ML features**, retrain and update `model_metadata.json`.
+9. **When changing ML features**, retrain and update the task-specific model metadata.
 10. **When changing DB models**, plan a migration or a dev DB reset; do not assume
     `create_all` will update an existing table.
 11. **When fixing a known issue, add a regression test** where practical.
@@ -883,6 +911,7 @@ A change is complete when:
 | Task | Primary files |
 |---|---|
 | Tune email rules | `backend/app/detectors/email_detector.py` |
+| Retrain email model | `ml/email/train.py`, `ml/email/features.py` |
 | Tune URL/SSRF rules | `backend/app/detectors/website_detector.py`, `backend/app/utils/ssrf_protector.py` |
 | Tune QR/quishing rules | `backend/app/detectors/qr_detector.py` |
 | Tune brand/TLD/shortener lists | `backend/app/utils/typosquatting.py` |
@@ -894,7 +923,7 @@ A change is complete when:
 | Add/modify DB tables | `backend/app/models/models.py`, `backend/app/database/session.py` |
 | Change PDF/CSV reports | `backend/app/api/reports.py` |
 | Change Groq prompt/fallback | `backend/app/services/groq_service.py` |
-| Retrain/change ML | `ml/preprocessing/features.py`, `ml/training/train.py`, `ml/evaluation/predict.py` |
+| Retrain/change ML | `ml/url/`, `ml/qr/`, `ml/email/`, `ml/preprocessing/features.py`, `ml/evaluation/predict.py` |
 | Add a dashboard page | `frontend/src/pages/`, `frontend/src/App.tsx`, `frontend/src/components/Sidebar.tsx` |
 | Add a frontend API call | `frontend/src/services/api.ts`, `frontend/src/types/index.ts` |
 | Change visual theme | `frontend/src/index.css`, Tailwind classes in components/pages |

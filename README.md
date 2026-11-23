@@ -1,4 +1,4 @@
-# PhishSentinal — Multi-Agent Fraud Detection and Automated Cybersecurity Response System
+# PhishSentinel — Multi-Agent Fraud Detection and Automated Cybersecurity Response System
 
 An intelligent, production-minded cybersecurity SaaS platform engineered to detect, classify, investigate, and autonomously respond to digital fraud across three primary attack vectors:
 
@@ -15,7 +15,7 @@ Built upon an autonomous **Five-Agent Multi-Agent Architecture** coordinating th
 - **Frontend**: React 19, TypeScript, Vite, Tailwind CSS, Lucide React, Recharts, React Router v7, Axios.
 - **Backend**: Python 3.14 / 3.11+, FastAPI, Pydantic v2, SQLAlchemy 2.0, Uvicorn, Python asyncio.
 - **Database**: SQLite (local development, PostgreSQL-ready schema).
-- **Machine Learning**: Scikit-Learn `RandomForestClassifier` (15 explainable numeric features).
+- **Machine Learning**: Task-specific URL `RandomForestClassifier`, QR `ExtraTreesClassifier`, and email TF-IDF + `MultinomialNB` classifiers, with deterministic rules retained for email.
 - **AI Reasoning**: Groq API (`openai/gpt-oss-120b` / `openai/gpt-oss-20b`) with automatic fallback to local deterministic rule engine.
 - **Cybersecurity & Forensics**: OpenCV (`cv2.QRCodeDetector`), Pillow, dnspython, ReportLab (PDF forensic reports), cryptography/hashlib.
 
@@ -67,15 +67,20 @@ py -m venv venv
 # Install dependencies (already installed in workspace)
 py -m pip install -r backend/requirements.txt
 
-# Train / Verify the ML model (synthetic demo dataset)
-py -m ml.training.train
+# Train URL, QR, and email classifiers and print train/test metrics
+py -m ml.training.train_models
 
-# Or retrain on the external URL dataset (url_features_extracted1.csv)
-py -m ml.training.train_external
+# The first email training run downloads the pinned dataset into the local HF cache.
 
 # Launch the FastAPI backend server (Port 8000)
 py -m uvicorn backend.app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
+
+Task-specific code and model artifacts are grouped under `ml/url/`, `ml/qr/`,
+and `ml/email/`. To train one model, run `py -m ml.url.train`,
+`py -m ml.qr.train`, or `py -m ml.email.train`. The email dataset is cached
+locally rather than copied into the repository; review its mixed-source
+licensing before redistributing data or model artifacts.
 
 The backend starts at `http://localhost:8000` with Swagger docs available at `http://localhost:8000/docs`.
 
@@ -130,11 +135,11 @@ The frontend stores the token in `localStorage` and sends it on every API call.
 Run the test suite:
 
 ```powershell
-py -m unittest backend/tests/test_detection.py backend/tests/test_api_scans.py backend/tests/test_hardening.py
+py -m unittest backend/tests/test_ml_models.py backend/tests/test_detection.py backend/tests/test_api_scans.py backend/tests/test_hardening.py
 ```
 
-All 27 unit, API, and hardening tests execute in under 15 seconds. The API and
-hardening tests use temporary databases, quarantine directories, and restore
+The suite covers ML routing and metrics, detectors, APIs, and hardening. The API
+and hardening tests use temporary databases, quarantine directories, and restore
 directories, so they do not modify local scan data.
 
 With the backend and frontend already running, verify the whole live stack with:

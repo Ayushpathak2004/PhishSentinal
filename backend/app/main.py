@@ -20,6 +20,7 @@ from backend.app.api.incidents import router as incidents_router
 from backend.app.api.quarantine import router as quarantine_router
 from backend.app.api.reports import router as reports_router
 from backend.app.api.settings import router as settings_router
+from backend.app.api.ml_metrics import router as ml_metrics_router
 
 # Initialize database schema
 Base.metadata.create_all(bind=engine)
@@ -30,7 +31,7 @@ load_settings_from_db()
 app = FastAPI(
     title=settings.PROJECT_NAME,
     version=settings.VERSION,
-    description="PhishSentinal: Multi-Agent Fraud Detection and Automated Cybersecurity Response System",
+    description="PhishSentinel: Multi-Agent Fraud Detection and Automated Cybersecurity Response System",
     docs_url="/docs",
     redoc_url="/redoc"
 )
@@ -104,6 +105,7 @@ app.include_router(incidents_router, prefix="/api", dependencies=protected)
 app.include_router(quarantine_router, prefix="/api", dependencies=protected)
 app.include_router(reports_router, prefix="/api", dependencies=protected)
 app.include_router(settings_router, prefix="/api", dependencies=protected)
+app.include_router(ml_metrics_router, prefix="/api", dependencies=protected)
 
 @app.get("/api/health")
 def health_check():
@@ -112,7 +114,7 @@ def health_check():
         "system": settings.PROJECT_NAME,
         "version": settings.VERSION,
         "groq_configured": bool(settings.GROQ_API_KEY.strip()),
-        "engine": "Hybrid-Tri-Layer (Rules + Scikit-Learn RF + Groq)",
+        "engine": "Task-Specific ML (URL Random Forest + QR Extra Trees) + Rules + Groq",
         "timestamp": time.time()
     }
 

@@ -65,7 +65,7 @@ class ScanResponse(BaseModel):
     risk_score: float
     risk_level: str
     confidence: float
-    fraud_probability: float
+    fraud_probability: Optional[float]
     summary: str
     indicators: List[ThreatIndicatorSchema]
     recommended_action: str

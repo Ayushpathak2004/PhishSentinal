@@ -13,7 +13,7 @@ local-demo mode (`REQUIRE_AUTH=false`), a missing token resolves to the seeded
 - `GET /api/auth/me` — current user.
 
 Send the token as `Authorization: Bearer <token>`. The frontend stores it in
-`localStorage['phishsentinal_token']` and sends it automatically.
+`localStorage['phishsentinel_token']` and sends it automatically.
 
 ## Scanners
 
@@ -110,6 +110,15 @@ Generates and downloads a formal PDF forensic investigation dossier.
 Exports all incident records as a downloadable CSV spreadsheet. Cells beginning
 with `=`, `+`, `-`, or `@` are prefixed with `'` to prevent spreadsheet formula
 injection.
+
+---
+
+## Machine Learning
+
+### `GET /api/ml/metrics`
+Returns each task's model status, dataset, sample count, and saved training/test
+accuracy and precision. Email metrics appear after training the email model
+from the pinned dataset.
 
 ---
 

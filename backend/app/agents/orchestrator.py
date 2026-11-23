@@ -90,7 +90,11 @@ class AgentOrchestrator:
 
         # STEP 2: Risk Score Agent
         try:
-            risk_out = await RiskScoreAgent.process(task_id=task_id, file_agent_output=file_out)
+            risk_out = await RiskScoreAgent.process(
+                task_id=task_id,
+                file_agent_output=file_out,
+                raw_input=raw_input,
+            )
         except Exception as e:
             risk_out = error_output(RiskScoreAgent.AGENT_NAME, RiskScoreAgent.ROLE, 2, e)
         agent_outputs["risk_score_agent"] = risk_out

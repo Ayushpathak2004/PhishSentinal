@@ -6,9 +6,6 @@ import { OverviewPage } from './pages/OverviewPage';
 import { EmailScannerPage } from './pages/EmailScannerPage';
 import { WebsiteScannerPage } from './pages/WebsiteScannerPage';
 import { QRScannerPage } from './pages/QRScannerPage';
-import { ThreatIntelPage } from './pages/ThreatIntelPage';
-import { AgentActivityPage } from './pages/AgentActivityPage';
-import { IncidentManagementPage } from './pages/IncidentManagementPage';
 import { QuarantineVaultPage } from './pages/QuarantineVaultPage';
 import { ReportsPage } from './pages/ReportsPage';
 import { SettingsPage } from './pages/SettingsPage';
@@ -27,9 +24,6 @@ export const App: React.FC = () => {
               <Route path="/email" element={<EmailScannerPage />} />
               <Route path="/website" element={<WebsiteScannerPage />} />
               <Route path="/qr" element={<QRScannerPage />} />
-              <Route path="/intel" element={<ThreatIntelPage />} />
-              <Route path="/agents" element={<AgentActivityPage />} />
-              <Route path="/incidents" element={<IncidentManagementPage />} />
               <Route path="/quarantine" element={<QuarantineVaultPage />} />
               <Route path="/reports" element={<ReportsPage />} />
               <Route path="/settings" element={<SettingsPage />} />

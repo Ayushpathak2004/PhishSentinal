@@ -25,7 +25,7 @@ export interface ScanResult {
   risk_score: number;
   risk_level: RiskLevel;
   confidence: number;
-  fraud_probability: number;
+  fraud_probability: number | null;
   summary: string;
   indicators: ThreatIndicator[];
   recommended_action: string;
@@ -64,6 +64,28 @@ export interface DashboardStats {
     level: string;
     timestamp: string;
   }>;
+}
+
+export interface ModelEvaluationMetrics {
+  accuracy: number;
+  precision: number;
+  recall: number;
+  f1_score: number;
+}
+
+export interface MlModelMetrics {
+  task: string;
+  display_name: string;
+  status: 'trained' | 'not_trained' | 'error';
+  model_type: string | null;
+  dataset_source: string | null;
+  dataset_samples: number | null;
+  metrics: {
+    train: ModelEvaluationMetrics;
+    test: ModelEvaluationMetrics;
+  } | null;
+  trained_at: string | null;
+  reason: string | null;
 }
 
 export interface AgentStatus {
